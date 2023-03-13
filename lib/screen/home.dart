@@ -1,5 +1,6 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:tools/screen/menu/list_menu.dart';
 
 class Accueil extends StatefulWidget {
   const Accueil({Key? key}) : super(key: key);
@@ -9,10 +10,8 @@ class Accueil extends StatefulWidget {
 }
 
 class _AccueilState extends State<Accueil> {
-  final Map<String, dynamic> _cours = {
-    "Menu": "Intermédiaire",
-    "GroupedList": "Débutant",
-    "SQLite": "Débutant",
+  final Map<String, Widget> _cours = {
+    "Menu": const Menu(),
   };
 
   @override
@@ -50,6 +49,12 @@ class _AccueilState extends State<Accueil> {
             surfaceTintColor: Colors.white,
             elevation: 5,
             child: ListTile(
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => _cours.values.toList()[index]));
+              },
               leading: const CircleAvatar(
                 child: Icon(CupertinoIcons.folder_open),
               ),
@@ -59,14 +64,6 @@ class _AccueilState extends State<Accueil> {
                     color: Colors.white,
                     fontWeight: FontWeight.bold,
                     fontSize: MediaQuery.of(context).size.width * .055),
-              ),
-              subtitle: Text(
-                _cours.values.toList()[index],
-                style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.normal,
-                    fontStyle: FontStyle.italic,
-                    fontSize: MediaQuery.of(context).size.width * .04),
               ),
               trailing: const Icon(
                 CupertinoIcons.forward,
