@@ -17,7 +17,7 @@ class _MenuState extends State<Menu> {
         child: ListView(
           children: [
             UserAccountsDrawerHeader(
-              accountName: Text("Geek Djenika"),
+              accountName: Text("Geek Djenika".toUpperCase()),
               accountEmail: Text("djenikaa@gmail.com"),
               currentAccountPicture: Center(
                 child: CircleAvatar(

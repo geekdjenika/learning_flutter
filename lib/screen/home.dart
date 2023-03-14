@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:tools/screen/menu/list_menu.dart';
+import 'package:tools/screen/sqlite/home.dart';
 
 class Accueil extends StatefulWidget {
   const Accueil({Key? key}) : super(key: key);
@@ -12,6 +13,7 @@ class Accueil extends StatefulWidget {
 class _AccueilState extends State<Accueil> {
   final Map<String, Widget> _cours = {
     "Menu": const Menu(),
+    "SQLite": const CRUDSQLite(),
   };
 
   @override
