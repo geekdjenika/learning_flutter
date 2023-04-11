@@ -14,10 +14,14 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
 
+  final _myForm = GlobalKey<FormState>();
+  bool _isLoading = true;
+
   void _refreshJournals() async {
     final data = await SQLHelper.getItems();
     setState(() {
       _journals = data;
+      _isLoading = false;
     });
   }
 
@@ -29,21 +33,20 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
 
   Future<void> _addItem() async {
     await SQLHelper.createItem(
-        _titleController.text, _descriptionController.text);
+        _titleController.text.trimLeft(), _descriptionController.text);
     _refreshJournals();
   }
 
   Future<void> _updateItem(int id) async {
     await SQLHelper.updateItem(
-        id,_titleController.text, _descriptionController.text);
+        id, _titleController.text, _descriptionController.text);
     _refreshJournals();
   }
 
   void _deleteItem(int id) async {
     await SQLHelper.deleteItem(id);
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Supprimer avec succès !'))
-    );
+    ScaffoldMessenger.of(context)
+        .showSnackBar(const SnackBar(content: Text('Supprimer avec succès !')));
     _refreshJournals();
   }
 
@@ -58,39 +61,60 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
         isScrollControlled: true,
         context: context,
         builder: (_) => Container(
+              decoration: const BoxDecoration(
+                  //color: Colors.cyan,
+                  borderRadius: BorderRadius.only(
+                      topLeft: Radius.circular(30),
+                      topRight: Radius.circular(30))),
               padding: EdgeInsets.only(
                   top: 15,
                   right: 15,
                   left: 15,
                   bottom: MediaQuery.of(context).viewInsets.bottom + 10),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  TextField(
-                    controller: _titleController,
-                    decoration: InputDecoration(labelText: 'Titre'),
-                  ),
-                  const SizedBox(
-                    height: 10,
-                  ),
-                  TextField(
-                    controller: _descriptionController,
-                    decoration: InputDecoration(labelText: 'Description'),
-                  ),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  ElevatedButton(
-                    onPressed: () async {
-                      id == null ? _addItem() : _updateItem(id);
-                      _titleController.text = '';
-                      _descriptionController.text = '';
-                      Navigator.pop(context);
-                    },
-                    child: Text(id == null ? 'Ajouter' : 'Modifier'),
-                  )
-                ],
+              child: Form(
+                key: _myForm,
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    TextFormField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(labelText: 'Titre'),
+                      validator: (value) {
+                        if (value!.trim().isEmpty) {
+                          return "Le titre ne doit pas être vide !";
+                        }
+                      },
+                    ),
+                    const SizedBox(
+                      height: 10,
+                    ),
+                    TextFormField(
+                      controller: _descriptionController,
+                      decoration:
+                          const InputDecoration(labelText: 'Description'),
+                      validator: (value) {
+                        if (value!.length < 4) {
+                          return "Donner une description d'au moins 4 caractères !";
+                        }
+                      },
+                    ),
+                    const SizedBox(
+                      height: 20,
+                    ),
+                    ElevatedButton(
+                      onPressed: () async {
+                        if (_myForm.currentState!.validate()) {
+                          id == null ? _addItem() : _updateItem(id);
+                          _titleController.text = '';
+                          _descriptionController.text = '';
+                          Navigator.pop(context);
+                        }
+                      },
+                      child: Text(id == null ? 'Ajouter' : 'Modifier'),
+                    )
+                  ],
+                ),
               ),
             ));
   }
@@ -98,51 +122,59 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.green[100],
       appBar: AppBar(),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           showForm(null);
         },
-        child: Icon(Icons.edit_note_rounded),
+        child: const Icon(Icons.edit_note_rounded),
       ),
-      body: ListView.builder(
-        itemCount: _journals.length,
-        itemBuilder: (context, index) => Card(
-          margin: EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-          child: ListTile(
-            leading: CircleAvatar(
-              child: Text("${_journals[index]['title'].toString().substring(0,1).toUpperCase()}"),
-            ),
-            title: Text('${_journals[index]['title']}'),
-            subtitle: Text('${_journals[index]['description']}'),
-            trailing: SizedBox(
-              width: MediaQuery.of(context).size.width * .125,
-              child: Row(
-                children: [
-                  GestureDetector(
-                    onTap: () {
-                      showForm(_journals[index]['id']);
-                    },
-                    child: const Icon(
-                      Icons.edit,
-                      color: Colors.blue,
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : ListView.builder(
+              itemCount: _journals.length,
+              itemBuilder: (context, index) => Card(
+                elevation: 2,
+                margin:
+                    const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                child: ListTile(
+                  leading: CircleAvatar(
+                    child: Text(_journals[index]['title']
+                        .toString()
+                        .substring(0, 1)
+                        .toUpperCase()),
+                  ),
+                  title: Text('${_journals[index]['title']}'),
+                  subtitle: Text('${_journals[index]['description']}'),
+                  trailing: SizedBox(
+                    width: MediaQuery.of(context).size.width * .125,
+                    child: Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () {
+                            showForm(_journals[index]['id']);
+                          },
+                          child: const Icon(
+                            Icons.edit,
+                            color: Colors.blue,
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () {
+                            _deleteItem(_journals[index]['id']);
+                          },
+                          child: const Icon(
+                            Icons.delete,
+                            color: Colors.redAccent,
+                          ),
+                        )
+                      ],
                     ),
                   ),
-                  GestureDetector(
-                    onTap: () {
-                      _deleteItem(_journals[index]['id']);
-                    },
-                    child: Icon(
-                      Icons.delete,
-                      color: Colors.redAccent,
-                    ),
-                  )
-                ],
+                ),
               ),
             ),
-          ),
-        ),
-      ),
     );
   }
 }
