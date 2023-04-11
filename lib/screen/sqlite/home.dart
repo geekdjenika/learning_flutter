@@ -43,11 +43,43 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
     _refreshJournals();
   }
 
-  void _deleteItem(int id) async {
-    await SQLHelper.deleteItem(id);
-    ScaffoldMessenger.of(context)
-        .showSnackBar(const SnackBar(content: Text('Supprimer avec succès !')));
-    _refreshJournals();
+  void _deleteItem(int id, String titre) async {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        backgroundColor: Colors.teal,
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              titre.length > 6
+                ? 'Supprimer ${titre.substring(0,6)} ?'
+                : 'Supprimer $titre ?'),
+            SizedBox(
+              width: MediaQuery.of(context).size.width * .34,
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextButton(
+                      onPressed: () async {
+                        await SQLHelper.deleteItem(id);
+                        ScaffoldMessenger.of(context).clearSnackBars();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              backgroundColor: Colors.green,
+                                content: Text('$titre supprimé avec succès !')));
+                        _refreshJournals();
+                      },
+                      child: const Text('Oui')),
+                  TextButton(
+                      onPressed: () {
+                        ScaffoldMessenger.of(context).clearSnackBars();
+                        _refreshJournals();
+                      },
+                      child: const Text('Non')),
+                ],
+              ),
+            )
+          ],
+        )));
   }
 
   void showForm(int? id) async {
@@ -162,7 +194,7 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
                         ),
                         GestureDetector(
                           onTap: () {
-                            _deleteItem(_journals[index]['id']);
+                            _deleteItem(_journals[index]['id'],_journals[index]['title']);
                           },
                           child: const Icon(
                             Icons.delete,
