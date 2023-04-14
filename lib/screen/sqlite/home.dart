@@ -16,10 +16,13 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
 
   final _myForm = GlobalKey<FormState>();
   bool _isLoading = true;
+  bool _multipleSelect = false;
+  bool _checked = false;
 
   void _refreshJournals() async {
     final data = await SQLHelper.getItems();
     setState(() {
+
       _journals = data;
       _isLoading = false;
     });
@@ -49,9 +52,8 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
         content: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              titre.length > 6
-                ? 'Supprimer ${titre.substring(0,6)} ?'
+            Text(titre.length > 6
+                ? 'Supprimer ${titre.substring(0, 6)} ?'
                 : 'Supprimer $titre ?'),
             SizedBox(
               width: MediaQuery.of(context).size.width * .34,
@@ -62,10 +64,9 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
                       onPressed: () async {
                         await SQLHelper.deleteItem(id);
                         ScaffoldMessenger.of(context).clearSnackBars();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              backgroundColor: Colors.green,
-                                content: Text('$titre supprimé avec succès !')));
+                        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                            backgroundColor: Colors.green,
+                            content: Text('$titre supprimé avec succès !')));
                         _refreshJournals();
                       },
                       child: const Text('Oui')),
@@ -123,8 +124,9 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
                     ),
                     TextFormField(
                       controller: _descriptionController,
-                      decoration:
-                          const InputDecoration(labelText: 'Description'),
+                      decoration: const InputDecoration(
+                          labelText: 'Description',
+                          helperText: 'Au moins 4 caractères'),
                       validator: (value) {
                         if (value!.length < 4) {
                           return "Donner une description d'au moins 4 caractères !";
@@ -134,6 +136,7 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
                     const SizedBox(
                       height: 20,
                     ),
+                    //OutlinedButton(onPressed: () => null, child: Text(id == null ? 'Ajouter' : 'Modifier'), autofocus: true,),
                     ElevatedButton(
                       onPressed: () async {
                         if (_myForm.currentState!.validate()) {
@@ -165,12 +168,16 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView.builder(
+              //reverse: true,
               itemCount: _journals.length,
               itemBuilder: (context, index) => Card(
                 elevation: 2,
                 margin:
                     const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
                 child: ListTile(
+                  onLongPress: () async {
+                    _multipleSelect = true;
+                  },
                   leading: CircleAvatar(
                     child: Text(_journals[index]['title']
                         .toString()
@@ -179,31 +186,40 @@ class _CRUDSQLiteState extends State<CRUDSQLite> {
                   ),
                   title: Text('${_journals[index]['title']}'),
                   subtitle: Text('${_journals[index]['description']}'),
-                  trailing: SizedBox(
-                    width: MediaQuery.of(context).size.width * .125,
-                    child: Row(
-                      children: [
-                        GestureDetector(
-                          onTap: () {
-                            showForm(_journals[index]['id']);
-                          },
-                          child: const Icon(
-                            Icons.edit,
-                            color: Colors.blue,
+                  trailing: _multipleSelect
+                      ? Checkbox(
+                          value: _checked,
+                          onChanged: (value) {
+                            setState(() {
+                              _checked = value!;
+                            });
+                          })
+                      : SizedBox(
+                          width: MediaQuery.of(context).size.width * .125,
+                          child: Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () {
+                                  showForm(_journals[index]['id']);
+                                },
+                                child: const Icon(
+                                  Icons.edit,
+                                  color: Colors.blue,
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () {
+                                  _deleteItem(_journals[index]['id'],
+                                      _journals[index]['title']);
+                                },
+                                child: const Icon(
+                                  Icons.delete,
+                                  color: Colors.redAccent,
+                                ),
+                              )
+                            ],
                           ),
                         ),
-                        GestureDetector(
-                          onTap: () {
-                            _deleteItem(_journals[index]['id'],_journals[index]['title']);
-                          },
-                          child: const Icon(
-                            Icons.delete,
-                            color: Colors.redAccent,
-                          ),
-                        )
-                      ],
-                    ),
-                  ),
                 ),
               ),
             ),
